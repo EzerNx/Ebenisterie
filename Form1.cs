@@ -162,11 +162,35 @@ namespace Ebenisterie
                 ("Part",    () => new PartsExporter(_sql).GetData()),
             };
 
+            // --- Étape 1 : choisir le fichier .bak à restaurer ---
+            string fichierBak;
+            using (var dlg = new OpenFileDialog
+            {
+                Title = "Choisir la sauvegarde de la base Report",
+                Filter = "Sauvegarde SQL Server (*.bak)|*.bak|Tous les fichiers (*.*)|*.*"
+            })
+            {
+                if (dlg.ShowDialog(this) != DialogResult.OK)
+                    return;
+
+                fichierBak = dlg.FileName;
+            }
+
             btnExporter.Enabled = false;
             progressBar1.Value = 0;
 
             try
             {
+                // --- Étape 2 : supprimer la base Report et la restaurer depuis le .bak ---
+                var restorer = new DatabaseRestorer(_sql.ConnectionString);
+                Log("Restauration depuis : " + fichierBak);
+
+                // Progress<T> renvoie les messages sur le thread de la fenêtre
+                await restorer.RestoreAsync(fichierBak, new Progress<string>(Log));
+
+                TesterConnexion();
+
+                // --- Étape 3 : export Excel (fonctionnement existant) ---
                 string fichier = GetCheminFichierExport();
 
                 // Si un export a déjà été fait aujourd'hui, on le remplace

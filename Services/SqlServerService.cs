@@ -8,6 +8,8 @@ namespace Ebenisterie.Services
     {
         private readonly string _connectionString;
 
+        public string ConnectionString => _connectionString;
+
         public SqlServerService()
         {
             IConfiguration configuration = new ConfigurationBuilder()

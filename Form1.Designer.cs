@@ -52,7 +52,7 @@
             btnExporter.Name = "btnExporter";
             btnExporter.Size = new Size(294, 48);
             btnExporter.TabIndex = 2;
-            btnExporter.Text = "Exporter";
+            btnExporter.Text = "Restaurer la base et exporter";
             btnExporter.UseVisualStyleBackColor = true;
             btnExporter.Click += btnExporter_Click;
             // 
