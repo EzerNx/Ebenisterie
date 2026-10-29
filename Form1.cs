@@ -156,10 +156,13 @@ namespace Ebenisterie
                 ("Projet",  () => new ProjetExporter(_sql).GetData()),
                 ("Contact", () => new ContactExporter(_sql).GetData()),
                 ("Phase",   () => new PhaseExporter(_sql).GetData()),
+                ("CxMateriel",   () => new CxMaterielExporter(_sql).GetData()),
+                ("Rollout",   () => new RolloutExporter(_sql).GetData()),
                 ("Produit", () => new ProduitExporter(_sql).GetData()),
                 ("Drawer",  () => new DrawerExporter(_sql).GetData()),
                 ("Doors",   () => new DoorsExporter(_sql).GetData()),
                 ("Part",    () => new PartsExporter(_sql).GetData()),
+                ("MaterialOverride",    () => new MaterialOverrideExporter(_sql).GetData()),
             };
 
             // --- Étape 1 : choisir le fichier .bak à restaurer ---
