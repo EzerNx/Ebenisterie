@@ -37,8 +37,15 @@ namespace Ebenisterie.Services
         {
             try
             {
+                // On teste le serveur via "master" : la base Report peut ne pas
+                // encore exister (nouvelle instance) avant la première restauration.
+                var builder = new SqlConnectionStringBuilder(_connectionString)
+                {
+                    InitialCatalog = "master"
+                };
+
                 using SqlConnection connection =
-                    new SqlConnection(_connectionString);
+                    new SqlConnection(builder.ConnectionString);
 
 
                 connection.Open();
