@@ -21,6 +21,15 @@ namespace Ebenisterie.Services
                 ? "Report"
                 : builder.InitialCatalog;
 
+            // Sécurité : ne jamais supprimer une base système de SQL Server
+            string[] basesSysteme = { "master", "model", "msdb", "tempdb" };
+            if (basesSysteme.Contains(DatabaseName, StringComparer.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException(
+                    $"La chaîne de connexion pointe vers la base système '{DatabaseName}'.\n" +
+                    "Dans appsettings.json, mets Database=Report (la base à restaurer).");
+            }
+
             // On ne peut pas supprimer/restaurer une base en étant connecté dessus
             builder.InitialCatalog = "master";
             _masterConnectionString = builder.ConnectionString;
