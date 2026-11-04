@@ -23,6 +23,29 @@ namespace Ebenisterie.Services
         }
 
 
+        /// <summary>
+        /// Service connecté à une chaîne de connexion précise (ex. : la base CVData).
+        /// </summary>
+        public SqlServerService(string connectionString)
+        {
+            _connectionString = connectionString;
+        }
+
+        /// <summary>
+        /// Retourne un service sur le même serveur, mais pointant vers une autre base.
+        /// Ex. : _sql.PourBase("CVData")
+        /// </summary>
+        public SqlServerService PourBase(string nomBase)
+        {
+            var builder = new SqlConnectionStringBuilder(_connectionString)
+            {
+                InitialCatalog = nomBase
+            };
+
+            return new SqlServerService(builder.ConnectionString);
+        }
+
+
         /*public SqlServerService()
         {
             _connectionString =

@@ -32,6 +32,7 @@
         {
             lblConnexion = new Label();
             btnExporter = new Button();
+            btnExporterCatalogue = new Button();
             txtLog = new RichTextBox();
             progressBar1 = new ProgressBar();
             lblTitre = new Label();
@@ -55,6 +56,16 @@
             btnExporter.Text = "Restaurer la base et exporter";
             btnExporter.UseVisualStyleBackColor = true;
             btnExporter.Click += btnExporter_Click;
+            // 
+            // btnExporterCatalogue
+            // 
+            btnExporterCatalogue.Location = new Point(40, 410);
+            btnExporterCatalogue.Name = "btnExporterCatalogue";
+            btnExporterCatalogue.Size = new Size(294, 48);
+            btnExporterCatalogue.TabIndex = 3;
+            btnExporterCatalogue.Text = "Exporter le catalogue";
+            btnExporterCatalogue.UseVisualStyleBackColor = true;
+            btnExporterCatalogue.Click += btnExporterCatalogue_Click;
             // 
             // txtLog
             // 
@@ -84,9 +95,10 @@
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(372, 450);
+            ClientSize = new Size(372, 480);
             Controls.Add(progressBar1);
             Controls.Add(txtLog);
+            Controls.Add(btnExporterCatalogue);
             Controls.Add(btnExporter);
             Controls.Add(lblTitre);
             Controls.Add(lblConnexion);
@@ -101,6 +113,7 @@
 
         private Label lblConnexion;
         private Button btnExporter;
+        private Button btnExporterCatalogue;
         private RichTextBox txtLog;
         private ProgressBar progressBar1;
         private FolderBrowserDialog folderBrowserDialog1;

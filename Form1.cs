@@ -77,7 +77,7 @@ namespace Ebenisterie
         /// C:\Users\[utilisateur]\Downloads\importDataColl\import_AAAA-MM-JJ.xlsx
         /// Le dossier est créé automatiquement s'il n'existe pas.
         /// </summary>
-        private static string GetCheminFichierExport()
+        private static string GetCheminFichierExport(string prefixe = "import")
         {
             string telechargements = GetDossierTelechargements();
 
@@ -85,7 +85,7 @@ namespace Ebenisterie
 
             Directory.CreateDirectory(dossier); // ne fait rien si le dossier existe déjà
 
-            string nomFichier = "import_" + DateTime.Now.ToString("yyyy-MM-dd") + ".xlsx";
+            string nomFichier = prefixe + "_" + DateTime.Now.ToString("yyyy-MM-dd") + ".xlsx";
 
             return Path.Combine(dossier, nomFichier);
         }
@@ -180,6 +180,7 @@ namespace Ebenisterie
             }
 
             btnExporter.Enabled = false;
+            btnExporterCatalogue.Enabled = false;
             progressBar1.Value = 0;
 
             try
@@ -194,40 +195,8 @@ namespace Ebenisterie
                 TesterConnexion();
 
                 // --- Étape 3 : export Excel (fonctionnement existant) ---
-                string fichier = GetCheminFichierExport();
+                string fichier = await ExporterVersExcelAsync(exports, "import");
 
-                // Si un export a déjà été fait aujourd'hui, on le remplace
-                // (lève une erreur claire si le fichier est ouvert dans Excel)
-                if (File.Exists(fichier))
-                {
-                    File.Delete(fichier);
-                    Log("Ancien fichier du jour remplacé.");
-                }
-
-                Log("Début export vers : " + fichier);
-
-                // Nouveau classeur à chaque export : évite l'erreur
-                // "feuille déjà existante" si on clique deux fois sur Exporter
-                var excel = new ExcelService();
-
-                for (int i = 0; i < exports.Count; i++)
-                {
-                    var (feuille, getData) = exports[i];
-
-                    Log("Export " + feuille + "...");
-
-                    // La requête SQL tourne en arrière-plan : la fenêtre ne gèle plus
-                    DataTable data = await Task.Run(getData);
-
-                    ExcelWriter.WriteTable(excel.CreateWorksheet(feuille), data);
-
-                    progressBar1.Value = (i + 1) * 100 / exports.Count;
-                }
-
-                // Une seule sauvegarde, à la fin
-                excel.Save(fichier);
-
-                Log("Export terminé.");
                 MessageBox.Show("Fichier créé :\n" + fichier);
             }
             catch (Exception ex)
@@ -238,7 +207,94 @@ namespace Ebenisterie
             finally
             {
                 btnExporter.Enabled = true;
+                btnExporterCatalogue.Enabled = true;
             }
+        }
+
+        /// <summary>
+        /// Export du catalogue Cabinet Vision (base CVData) dans un fichier Excel séparé :
+        /// Downloads\importDataCollabox\catalogue_AAAA-MM-JJ.xlsx
+        /// Aucune restauration : on lit CVData telle qu'elle est sur le serveur.
+        /// </summary>
+        private async void btnExporterCatalogue_Click(object sender, EventArgs e)
+        {
+            btnExporter.Enabled = false;
+            btnExporterCatalogue.Enabled = false;
+            progressBar1.Value = 0;
+
+            try
+            {
+                // Même serveur que la base Report, mais base CVData
+                SqlServerService cvdata = _sql.PourBase("CVData");
+
+                var exports = new CatalogueExporter(cvdata).GetExports();
+
+                string fichier = await ExporterVersExcelAsync(exports, "catalogue");
+
+                MessageBox.Show("Fichier créé :\n" + fichier);
+            }
+            catch (Exception ex)
+            {
+                Log("ERREUR : " + ex.Message);
+                MessageBox.Show(ex.Message, "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                btnExporter.Enabled = true;
+                btnExporterCatalogue.Enabled = true;
+            }
+        }
+
+        /// <summary>
+        /// Crée un fichier Excel avec une feuille par export et retourne son chemin.
+        /// Utilisé par l'export principal et par l'export du catalogue.
+        /// </summary>
+        private async Task<string> ExporterVersExcelAsync(
+            List<(string Feuille, Func<DataTable> GetData)> exports,
+            string prefixeFichier)
+        {
+            string fichier = GetCheminFichierExport(prefixeFichier);
+
+            // Si un export a déjà été fait aujourd'hui, on le remplace
+            // (lève une erreur claire si le fichier est ouvert dans Excel)
+            if (File.Exists(fichier))
+            {
+                File.Delete(fichier);
+                Log("Ancien fichier du jour remplacé.");
+            }
+
+            Log("Début export vers : " + fichier);
+
+            // Nouveau classeur à chaque export : évite l'erreur
+            // "feuille déjà existante" si on clique deux fois
+            var excel = new ExcelService();
+
+            try
+            {
+                for (int i = 0; i < exports.Count; i++)
+                {
+                    var (feuille, getData) = exports[i];
+
+                    Log("Export " + feuille + "...");
+
+                    // La requête SQL tourne en arrière-plan : la fenêtre ne gèle pas
+                    DataTable data = await Task.Run(getData);
+
+                    ExcelWriter.WriteTable(excel.CreateWorksheet(feuille), data);
+
+                    progressBar1.Value = (i + 1) * 100 / exports.Count;
+                }
+
+                // Une seule sauvegarde, à la fin
+                excel.Save(fichier);
+            }
+            finally
+            {
+                excel.Close();
+            }
+
+            Log("Export terminé.");
+            return fichier;
         }
     }
 }
