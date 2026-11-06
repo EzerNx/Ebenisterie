@@ -33,6 +33,7 @@
             lblConnexion = new Label();
             btnExporter = new Button();
             btnExporterCatalogue = new Button();
+            btnParametres = new Button();
             txtLog = new RichTextBox();
             progressBar1 = new ProgressBar();
             lblTitre = new Label();
@@ -67,6 +68,16 @@
             btnExporterCatalogue.UseVisualStyleBackColor = true;
             btnExporterCatalogue.Click += btnExporterCatalogue_Click;
             // 
+            // btnParametres
+            // 
+            btnParametres.Location = new Point(255, 47);
+            btnParametres.Name = "btnParametres";
+            btnParametres.Size = new Size(90, 23);
+            btnParametres.TabIndex = 6;
+            btnParametres.Text = "Paramètres";
+            btnParametres.UseVisualStyleBackColor = true;
+            btnParametres.Click += btnParametres_Click;
+            // 
             // txtLog
             // 
             txtLog.Location = new Point(25, 71);
@@ -85,11 +96,11 @@
             // lblTitre
             // 
             lblTitre.AutoSize = true;
-            lblTitre.Location = new Point(106, 24);
+            lblTitre.Location = new Point(90, 24);
             lblTitre.Name = "lblTitre";
             lblTitre.Size = new Size(152, 15);
             lblTitre.TabIndex = 0;
-            lblTitre.Text = "Export SQL Server vers Excel";
+            lblTitre.Text = "Export Cabinet Vision vers Collabox";
             // 
             // Form1
             // 
@@ -98,12 +109,16 @@
             ClientSize = new Size(372, 480);
             Controls.Add(progressBar1);
             Controls.Add(txtLog);
+            Controls.Add(btnParametres);
             Controls.Add(btnExporterCatalogue);
             Controls.Add(btnExporter);
             Controls.Add(lblTitre);
             Controls.Add(lblConnexion);
+            FormBorderStyle = FormBorderStyle.FixedSingle;
+            MaximizeBox = false;
             Name = "Form1";
-            Text = "Form1";
+            StartPosition = FormStartPosition.CenterScreen;
+            Text = "Collabox Import";
             ResumeLayout(false);
             PerformLayout();
         }
@@ -114,6 +129,7 @@
         private Label lblConnexion;
         private Button btnExporter;
         private Button btnExporterCatalogue;
+        private Button btnParametres;
         private RichTextBox txtLog;
         private ProgressBar progressBar1;
         private FolderBrowserDialog folderBrowserDialog1;

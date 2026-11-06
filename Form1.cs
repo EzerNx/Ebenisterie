@@ -57,19 +57,90 @@ namespace Ebenisterie
     {
         private const string NomDossierExport = "importDataCollabox";
 
-        private readonly SqlServerService _sql;
+        // Remplacé quand on trouve ou change le serveur SQL de ce PC
+        private SqlServerService _sql;
 
         public Form1()
         {
             InitializeComponent();
 
-            _sql = new SqlServerService();
+            Text = ParametresApp.NomApplication;
+            try
+            {
+                // Reprend le logo intégré au .exe
+                Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
+            }
+            catch
+            {
+                // icône par défaut si l'extraction échoue
+            }
+
+            // Valeur provisoire, confirmée au démarrage par InitialiserConnexionAsync
+            string serveur = ParametresApp.LireServeurEnregistre()
+                ?? ParametresApp.LireServeurParDefaut()
+                ?? "localhost";
+            _sql = new SqlServerService(ParametresApp.ChaineConnexion(serveur));
 
             progressBar1.Minimum = 0;
             progressBar1.Maximum = 100;
             progressBar1.Value = 0;
 
+            Shown += async (_, _) => await InitialiserConnexionAsync();
+        }
+
+        /// <summary>
+        /// Au démarrage : trouve le serveur SQL de ce PC (enregistré, appsettings.json,
+        /// ou instance installée) sans bloquer la fenêtre.
+        /// </summary>
+        private async Task InitialiserConnexionAsync()
+        {
+            ActiverBoutons(false);
+            lblConnexion.ForeColor = SystemColors.ControlText;
+            lblConnexion.Text = "Recherche du serveur SQL...";
+
+            var messages = new List<string>();
+            string? serveur = await Task.Run(() => ParametresApp.TrouverServeur(messages));
+
+            foreach (string message in messages)
+                Log(message);
+
+            if (serveur != null)
+            {
+                ParametresApp.EnregistrerServeur(serveur); // démarrage rapide la prochaine fois
+                UtiliserServeur(serveur);
+            }
+            else
+            {
+                lblConnexion.ForeColor = Color.Red;
+                lblConnexion.Text = "Aucun serveur SQL trouvé";
+                Log("Aucun serveur SQL trouvé sur ce PC. Clique sur « Paramètres » pour l'indiquer.");
+            }
+
+            ActiverBoutons(true);
+        }
+
+        private void UtiliserServeur(string serveur)
+        {
+            _sql = new SqlServerService(ParametresApp.ChaineConnexion(serveur));
             TesterConnexion();
+        }
+
+        private void ActiverBoutons(bool actif)
+        {
+            btnExporter.Enabled = actif;
+            btnExporterCatalogue.Enabled = actif;
+            btnParametres.Enabled = actif;
+        }
+
+        private void btnParametres_Click(object sender, EventArgs e)
+        {
+            using var form = new ParametresForm(_sql.Serveur);
+
+            if (form.ShowDialog(this) == DialogResult.OK)
+            {
+                ParametresApp.EnregistrerServeur(form.Serveur);
+                UtiliserServeur(form.Serveur);
+            }
         }
 
         /// <summary>
@@ -127,7 +198,7 @@ namespace Ebenisterie
             if (resultat)
             {
                 lblConnexion.ForeColor = Color.Green;
-                lblConnexion.Text = "Connecté à SQL Server";
+                lblConnexion.Text = "Connecté à " + _sql.Serveur;
             }
             else
             {
@@ -179,8 +250,7 @@ namespace Ebenisterie
                 fichierBak = dlg.FileName;
             }
 
-            btnExporter.Enabled = false;
-            btnExporterCatalogue.Enabled = false;
+            ActiverBoutons(false);
             progressBar1.Value = 0;
 
             try
@@ -206,8 +276,7 @@ namespace Ebenisterie
             }
             finally
             {
-                btnExporter.Enabled = true;
-                btnExporterCatalogue.Enabled = true;
+                ActiverBoutons(true);
             }
         }
 
@@ -218,8 +287,7 @@ namespace Ebenisterie
         /// </summary>
         private async void btnExporterCatalogue_Click(object sender, EventArgs e)
         {
-            btnExporter.Enabled = false;
-            btnExporterCatalogue.Enabled = false;
+            ActiverBoutons(false);
             progressBar1.Value = 0;
 
             try
@@ -240,8 +308,7 @@ namespace Ebenisterie
             }
             finally
             {
-                btnExporter.Enabled = true;
-                btnExporterCatalogue.Enabled = true;
+                ActiverBoutons(true);
             }
         }
 

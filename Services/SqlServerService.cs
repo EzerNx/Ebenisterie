@@ -1,5 +1,4 @@
 ﻿using Microsoft.Data.SqlClient;
-using Microsoft.Extensions.Configuration;
 using System.Data;
 
 namespace Ebenisterie.Services
@@ -10,17 +9,11 @@ namespace Ebenisterie.Services
 
         public string ConnectionString => _connectionString;
 
-        public SqlServerService()
-        {
-            IConfiguration configuration = new ConfigurationBuilder()
-                .SetBasePath(AppContext.BaseDirectory)
-                .AddJsonFile("appsettings.json", optional: false)
-                .Build();
+        /// <summary>Nom du serveur (ex. : localhost\SQLEXPRESS).</summary>
+        public string Serveur => new SqlConnectionStringBuilder(_connectionString).DataSource;
 
-            _connectionString =
-                configuration.GetConnectionString("SqlServer")
-                ?? throw new Exception("Connection SQL Server introuvable.");
-        }
+        // Le serveur est choisi par ParametresApp (propre à chaque PC),
+        // la chaîne de connexion est donc toujours passée au constructeur.
 
 
         /// <summary>
