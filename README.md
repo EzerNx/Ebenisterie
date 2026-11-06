@@ -54,5 +54,5 @@ Pour une nouvelle version, augmenter `<Version>` dans `Ebenisterie.csproj` avant
 | `Services/ParametresApp.cs` | détection et enregistrement du serveur de ce PC |
 | `Services/DatabaseRestorer.cs` | suppression et restauration de la base `Report` |
 | `Services/SqlServerService.cs` | exécution des requêtes SQL |
-| `Services/ExcelService.cs`, `Helpers/ExcelWriter.cs` | création du fichier Excel (EPPlus) |
+| `Services/ExcelService.cs`, `Helpers/ExcelWriter.cs` | création du fichier Excel (ClosedXML, licence MIT) |
 | `Exporters/` | une classe par table exportée ; `CatalogueExporter.cs` pour `CVData` |

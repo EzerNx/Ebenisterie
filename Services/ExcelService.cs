@@ -1,58 +1,43 @@
-﻿using OfficeOpenXml;
-using System.IO;
-
+﻿using ClosedXML.Excel;
 
 namespace Ebenisterie.Services
 {
+    /// <summary>
+    /// Classeur Excel en mémoire (ClosedXML, licence MIT : gratuit en entreprise).
+    /// </summary>
     public class ExcelService
     {
-        private ExcelPackage _package;
-
+        private readonly XLWorkbook _workbook;
 
         public ExcelService()
         {
-            ExcelPackage.License.SetNonCommercialPersonal("Ebenisterie");
-
-            _package = new ExcelPackage();
+            _workbook = new XLWorkbook();
         }
 
-
-        public ExcelWorksheet CreateWorksheet(string name)
+        public IXLWorksheet CreateWorksheet(string name)
         {
-            // Vérifie si la feuille existe déjà
-            var existing =
-                _package.Workbook.Worksheets[name];
-
-
-            if (existing != null)
+            // Si la feuille existe déjà, on la remplace
+            if (_workbook.Worksheets.Contains(name))
             {
-                _package.Workbook.Worksheets.Delete(name);
+                _workbook.Worksheets.Delete(name);
             }
 
-
-            return _package.Workbook.Worksheets.Add(name);
+            return _workbook.Worksheets.Add(name);
         }
-
-
 
         public void Save(string path)
         {
-            FileInfo file = new FileInfo(path);
-
-
-            if (file.Exists)
+            if (File.Exists(path))
             {
-                file.Delete();
+                File.Delete(path);
             }
 
-
-            _package.SaveAs(file);
+            _workbook.SaveAs(path);
         }
-
 
         public void Close()
         {
-            _package.Dispose();
+            _workbook.Dispose();
         }
     }
 }
