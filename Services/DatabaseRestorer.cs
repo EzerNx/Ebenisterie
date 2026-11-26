@@ -66,8 +66,24 @@ namespace Ebenisterie.Services
                 progress?.Report($"Restauration de {DatabaseName} (peut prendre quelques minutes)...");
                 string sql = BuildRestoreSql(bakPath, files, dataPath, logPath);
 
-                await using var cmd = new SqlCommand(sql, conn) { CommandTimeout = 0 };
-                await cmd.ExecuteNonQueryAsync();
+                await using (var cmd = new SqlCommand(sql, conn) { CommandTimeout = 0 })
+                {
+                    await cmd.ExecuteNonQueryAsync();
+                }
+
+                // 5) Le .bak garde le propriétaire d'origine (dbo) : sans cette étape,
+                //    le compte qui restaure ne peut pas ouvrir la base ("Cannot open database").
+                progress?.Report($"Attribution de {DatabaseName} au compte courant...");
+                try
+                {
+                    await AttribuerAuCompteCourantAsync(conn);
+                }
+                catch (SqlException ex)
+                {
+                    // La base est restaurée : on signale le problème sans bloquer
+                    // (un sysadmin peut ouvrir la base même sans cette étape).
+                    progress?.Report($"Avertissement : impossible d'attribuer {DatabaseName} au compte courant : {ex.Message}");
+                }
             }
 
             // Les connexions du pool vers l'ancienne base ne sont plus valides
@@ -155,6 +171,24 @@ DROP DATABASE {db};";
 
             sb.Append("REPLACE, RECOVERY;");
             return sb.ToString();
+        }
+
+        /// <summary>
+        /// Donne la base restaurée au compte qui lance l'utilitaire et la remet en MULTI_USER.
+        /// ORIGINAL_LOGIN() = compte Windows courant, donc aucun nom écrit en dur.
+        /// </summary>
+        private async Task AttribuerAuCompteCourantAsync(SqlConnection conn)
+        {
+            string db = QuoteName(DatabaseName);
+            string sql =
+                "DECLARE @login sysname = ORIGINAL_LOGIN(); " +
+                "DECLARE @sql nvarchar(max) = " +
+                $"N'ALTER AUTHORIZATION ON DATABASE::{db.Replace("'", "''")} TO ' + QUOTENAME(@login) + N'; " +
+                $"ALTER DATABASE {db.Replace("'", "''")} SET MULTI_USER;'; " +
+                "EXEC(@sql);";
+
+            await using var cmd = new SqlCommand(sql, conn);
+            await cmd.ExecuteNonQueryAsync();
         }
 
         private static string QuoteName(string name) => "[" + name.Replace("]", "]]") + "]";
